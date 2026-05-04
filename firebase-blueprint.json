@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores business information for the SME user.",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string", "description": "The name of the business." },
+        "businessType": { "type": "string", "description": "Category of business (e.g., Retail, F&B)." },
+        "currency": { "type": "string", "description": "Preferred currency code (e.g., IDR, USD)." },
+        "email": { "type": "string", "description": "Contact email." },
+        "onboardingCompleted": { "type": "boolean", "description": "Whether the user finished initial setup." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["businessName", "currency"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial record of income or expense.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["income", "expense"] },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "amount", "category", "date", "userId"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Transaction category definition.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["income", "expense", "both"] },
+        "iconName": { "type": "string" }
+      },
+      "required": ["name", "type"]
+    }
+  },
+  "firestore": {
+    "/userProfiles/{userId}": {
+      "schema": "UserProfile",
+      "description": "Individual business profile for each user."
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Global collection of transactions (secured by userId)."
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Predefined transaction categories."
+    }
+  }
+}

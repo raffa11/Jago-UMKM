@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isVerified() { return request.auth.token.email_verified == true; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // --- UserProfile Security ---
+    function isValidUserProfile(data) {
+      return data.businessName is string && data.businessName.size() <= 200
+          && data.currency is string && data.currency.size() <= 10
+          && (data.businessType == null || (data.businessType is string && data.businessType.size() <= 100))
+          && (data.onboardingCompleted is bool);
+    }
+
+    match /userProfiles/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidUserProfile(incoming())
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['businessName', 'currency', 'businessType', 'onboardingCompleted']);
+    }
+
+    // --- Transaction Security ---
+    function isValidTransaction(data) {
+      return data.type in ['income', 'expense']
+          && data.amount is number && data.amount >= 0
+          && data.category is string && data.category.size() <= 100
+          && data.userId == request.auth.uid
+          && data.date is timestamp;
+    }
+
+    match /transactions/{transactionId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidTransaction(incoming());
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && isValidTransaction(incoming());
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // --- Category Security ---
+    match /categories/{categoryId} {
+      allow read: if isSignedIn();
+      allow write: if false; // System defined for now
+    }
+  }
+}
