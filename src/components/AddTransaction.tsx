@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, handleFirestoreError } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp, Timestamp, updateDoc, doc, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, Timestamp, updateDoc, doc, runTransaction, deleteDoc } from 'firebase/firestore';
 import { UserProfile, TransactionType, Product, OperationType, Transaction } from '../types';
-import { X, ArrowUpRight, ArrowDownLeft, FileText, Check, Loader2, Tag, Package } from 'lucide-react';
+import { X, ArrowUpRight, ArrowDownLeft, FileText, Check, Loader2, Tag, Package, Trash2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { cn } from '../lib/utils';
+import { cn, formatNumber, parseNumber } from '../lib/utils';
 
 interface AddTransactionProps {
   onClose: () => void;
@@ -16,13 +16,13 @@ interface AddTransactionProps {
 
 const CATEGORIES = {
   [TransactionType.INCOME]: ['Penjualan', 'Modal', 'Refund', 'Lainnya'],
-  [TransactionType.EXPENSE]: ['Stok Barang', 'Pemasaran', 'Sewa', 'Utilitas', 'Gaji', 'Lainnya']
+  [TransactionType.EXPENSE]: ['Bahan Baku', 'Keuntungan', 'Sewa', 'Utilitas', 'Gaji', 'Lainnya']
 };
 
 export function AddTransaction({ onClose, profile, transaction, products = [], activeBranchId }: AddTransactionProps) {
   const isEditing = !!transaction;
   const [type, setType] = useState<TransactionType>(transaction?.type || TransactionType.EXPENSE);
-  const [amount, setAmount] = useState(transaction?.amount.toString() || '');
+  const [amount, setAmount] = useState(transaction?.amount ? formatNumber(transaction.amount) : '');
   const [category, setCategory] = useState(transaction?.category || '');
   const [description, setDescription] = useState(transaction?.description || '');
   const [productId, setProductId] = useState(transaction?.productId || '');
@@ -33,24 +33,25 @@ export function AddTransaction({ onClose, profile, transaction, products = [], a
     if (productId && !isEditing) {
       const product = products.find(p => p.id === productId);
       if (product) {
-        setCategory(type === TransactionType.INCOME ? 'Penjualan' : 'Stok Barang');
+        setCategory(type === TransactionType.INCOME ? 'Penjualan' : 'Bahan Baku');
         const price = type === TransactionType.INCOME ? product.price : product.cost;
-        setAmount((price * parseFloat(quantity)).toString());
-        if (!description) setDescription(`${type === TransactionType.INCOME ? 'Penjualan' : 'Pembelian'} ${product.name}`);
+        setAmount(formatNumber(price * parseFloat(quantity)));
+        if (!description) setDescription(`${type === TransactionType.INCOME ? 'Produksi' : 'Beli Bahan'} ${product.name}`);
       }
     }
   }, [productId, type, quantity, products, isEditing]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !category || loading) return;
+    const cleanAmount = parseNumber(amount);
+    if (!cleanAmount || !category || loading) return;
 
     setLoading(true);
     try {
       if (isEditing && transaction) {
         await updateDoc(doc(db, 'transactions', transaction.id), {
           type,
-          amount: parseFloat(amount),
+          amount: cleanAmount,
           category,
           description,
         });
@@ -68,7 +69,7 @@ export function AddTransaction({ onClose, profile, transaction, products = [], a
             const transRef = doc(collection(db, 'transactions'));
             tx.set(transRef, {
               type,
-              amount: parseFloat(amount),
+              amount: cleanAmount,
               category,
               description,
               date: Timestamp.now(),
@@ -83,7 +84,7 @@ export function AddTransaction({ onClose, profile, transaction, products = [], a
         } else {
           await addDoc(collection(db, 'transactions'), {
             type,
-            amount: parseFloat(amount),
+            amount: cleanAmount,
             category,
             description,
             date: Timestamp.now(),
@@ -93,6 +94,19 @@ export function AddTransaction({ onClose, profile, transaction, products = [], a
           });
         }
       }
+      onClose();
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'transactions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!transaction || !window.confirm("Hapus transaksi ini?")) return;
+    setLoading(true);
+    try {
+      await deleteDoc(doc(db, 'transactions', transaction.id));
       onClose();
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'transactions');
@@ -115,7 +129,13 @@ export function AddTransaction({ onClose, profile, transaction, products = [], a
         <span className="font-display font-semibold text-white text-base">
           {isEditing ? 'Detail transaksi' : 'Catat transaksi'}
         </span>
-        <div className="w-10"></div>
+        <div className="w-10 flex justify-end">
+          {isEditing && (
+            <button onClick={handleDelete} className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-all">
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </header>
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto pt-8 pb-12 space-y-10 no-scrollbar">
@@ -147,15 +167,16 @@ export function AddTransaction({ onClose, profile, transaction, products = [], a
         <div className="px-8 space-y-4">
           <label className="text-label ml-1">Nominal ({profile.currency})</label>
           <div className="relative group">
-            <div className="flex items-end font-display font-bold text-6xl text-white tracking-tight">
-              <span className="text-2xl text-neon-lime mb-2 mr-2 font-sans opacity-40">Rp</span>
+            <div className="flex items-end font-display font-bold text-5xl text-white tracking-tight">
+              <span className="text-xl text-neon-lime mb-2 mr-2 font-sans opacity-40">Rp</span>
               <input
                 required
                 autoFocus
-                type="number"
+                type="text"
+                inputMode="numeric"
                 placeholder="0"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(formatNumber(e.target.value))}
                 className="w-full bg-transparent outline-none placeholder:text-white/10 caret-neon-lime"
               />
             </div>

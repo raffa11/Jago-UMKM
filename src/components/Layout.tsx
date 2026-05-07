@@ -1,17 +1,35 @@
 import React from 'react';
-import { Home, List, PieChart, User, Plus, Package, Receipt, Users } from 'lucide-react';
+import { Home, List, PieChart, User, Plus, Package, Receipt, Users, BarChart3, Coins } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: 'dashboard' | 'sales' | 'inventory' | 'customers' | 'profile';
-  setActiveTab: (tab: 'dashboard' | 'sales' | 'inventory' | 'customers' | 'profile') => void;
+  activeTab: 'dashboard' | 'sales' | 'inventory' | 'reports' | 'profile';
+  setActiveTab: (tab: 'dashboard' | 'sales' | 'inventory' | 'reports' | 'profile') => void;
+  headerRight?: React.ReactNode;
 }
 
-export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
+export function Layout({ children, activeTab, setActiveTab, headerRight }: LayoutProps) {
   return (
     <div className="min-h-screen bg-dark-bg font-sans text-white">
       <main className="min-h-screen pb-28 md:max-w-md md:mx-auto md:bg-dark-bg relative overflow-x-hidden">
+        {/* Header Logo */}
+        <div className="px-6 py-4 flex items-center justify-between sticky top-0 bg-dark-bg/80 backdrop-blur-lg z-40 border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-neon-lime flex items-center justify-center shadow-lg shadow-neon-lime/20">
+              <Coins className="w-5 h-5 text-black stroke-[2.5]" />
+            </div>
+            <h1 className="text-lg font-bold tracking-tight">Jago <span className="text-neon-lime">UMKM</span></h1>
+          </div>
+          <div className="flex items-center gap-4">
+             {headerRight || (
+               <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                  <User className="w-4 h-4 text-white/40" />
+               </div>
+             )}
+          </div>
+        </div>
+
         {children}
         
         {/* Navigation Bar */}
@@ -23,8 +41,8 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               activeTab === 'dashboard' ? "text-neon-lime" : "text-white/20"
             )}
           >
-            <Home className={cn("w-6 h-6", activeTab === 'dashboard' ? "stroke-[2.5]" : "stroke-2")} />
-            <span className="text-[10px] font-medium">Beranda</span>
+            <Home className={cn("w-5 h-5", activeTab === 'dashboard' ? "stroke-[2.5]" : "stroke-2")} />
+            <span className="text-[9px] font-medium">Beranda</span>
           </button>
           
           <button
@@ -34,8 +52,8 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               activeTab === 'sales' ? "text-neon-lime" : "text-white/20"
             )}
           >
-            <Receipt className={cn("w-6 h-6", activeTab === 'sales' ? "stroke-[2.5]" : "stroke-2")} />
-            <span className="text-[10px] font-medium">Penjualan</span>
+            <Receipt className={cn("w-5 h-5", activeTab === 'sales' ? "stroke-[2.5]" : "stroke-2")} />
+            <span className="text-[9px] font-medium">Penjualan</span>
           </button>
 
           <button
@@ -57,14 +75,14 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
           </button>
 
           <button
-            onClick={() => setActiveTab('customers')}
+            onClick={() => setActiveTab('reports')}
             className={cn(
               "flex flex-col items-center gap-1 transition-all flex-1",
-              activeTab === 'customers' ? "text-neon-lime" : "text-white/20"
+              activeTab === 'reports' ? "text-neon-lime" : "text-white/20"
             )}
           >
-            <Users className={cn("w-6 h-6", activeTab === 'customers' ? "stroke-[2.5]" : "stroke-2")} />
-            <span className="text-[10px] font-medium">Pelanggan</span>
+            <BarChart3 className={cn("w-5 h-5", activeTab === 'reports' ? "stroke-[2.5]" : "stroke-2")} />
+            <span className="text-[9px] font-medium">Laporan</span>
           </button>
 
           <button
@@ -74,8 +92,8 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               activeTab === 'profile' ? "text-neon-lime" : "text-white/20"
             )}
           >
-            <User className={cn("w-6 h-6", activeTab === 'profile' ? "stroke-[2.5]" : "stroke-2")} />
-            <span className="text-[10px] font-medium">Profil</span>
+            <User className={cn("w-5 h-5", activeTab === 'profile' ? "stroke-[2.5]" : "stroke-2")} />
+            <span className="text-[9px] font-medium">Profil</span>
           </button>
         </nav>
       </main>

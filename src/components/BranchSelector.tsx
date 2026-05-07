@@ -37,7 +37,7 @@ export function BranchSelector({ branches, activeBranchId, onSelect, onManage }:
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="absolute top-full left-0 mt-3 w-64 bg-dark-card border border-dark-border rounded-xl shadow-2xl p-2 z-50"
+            className="absolute top-full right-0 mt-3 w-64 bg-dark-card border border-dark-border rounded-xl shadow-2xl p-2 z-50"
           >
             <div className="max-h-60 overflow-y-auto no-scrollbar py-2">
               {branches.map((branch) => (

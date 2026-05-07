@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Product, UserProfile, OperationType } from '../types';
-import { formatCurrency, cn } from '../lib/utils';
+import { formatCurrency, cn, formatNumber, parseNumber } from '../lib/utils';
 import { Search, Plus, Package, Edit2, Trash2, ArrowUp, ArrowDown, Loader2, Tag, Box, Info, Check } from 'lucide-react';
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db, auth, handleFirestoreError } from '../lib/firebase';
@@ -32,7 +32,7 @@ export function Inventory({ products, profile, activeBranchId }: InventoryProps)
           type="text" 
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Cari nama produk atau SKU..." 
+          placeholder="Cari bahan atau material..." 
           className="input-field pl-14"
         />
       </div>
@@ -40,8 +40,8 @@ export function Inventory({ products, profile, activeBranchId }: InventoryProps)
       <div className="space-y-4">
         <div className="flex justify-between items-end px-1">
           <div>
-            <p className="text-label mb-0.5">Manajemen aset</p>
-            <h2>Data barang</h2>
+            <p className="text-label mb-0.5">Sistem Pabrik</p>
+            <h2>Bahan & Produksi</h2>
           </div>
           <button 
             onClick={() => setIsAddOpen(true)}
@@ -91,7 +91,7 @@ export function Inventory({ products, profile, activeBranchId }: InventoryProps)
 
                 <div className="grid grid-cols-2 gap-4 relative z-10">
                   <div className="bg-dark-bg/40 p-4 rounded-xl border border-white/5">
-                    <p className="text-label mb-1">Stok tersedia</p>
+                    <p className="text-label mb-1">Volume Bahan</p>
                     <p className={cn(
                       "text-xl font-bold",
                       p.stock <= 5 ? "text-danger" : "text-white"
@@ -100,7 +100,7 @@ export function Inventory({ products, profile, activeBranchId }: InventoryProps)
                     </p>
                   </div>
                   <div className="bg-dark-bg/40 p-4 rounded-xl border border-white/5 text-right">
-                    <p className="text-label mb-1 text-right">Harga jual</p>
+                    <p className="text-label mb-1 text-right">Nilai Satuan</p>
                     <p className="text-xl font-bold text-neon-lime">
                       {formatCurrency(p.price, profile.currency)}
                     </p>
@@ -142,8 +142,8 @@ function ProductModal({ onClose, profile, activeBranchId, product }: ProductModa
   const [sku, setSku] = useState(product?.sku || '');
   const [stock, setStock] = useState(product?.stock.toString() || '0');
   const [unit, setUnit] = useState(product?.unit || 'pcs');
-  const [price, setPrice] = useState(product?.price.toString() || '');
-  const [cost, setCost] = useState(product?.cost.toString() || '');
+  const [price, setPrice] = useState(product?.price ? formatNumber(product.price) : '');
+  const [cost, setCost] = useState(product?.cost ? formatNumber(product.cost) : '');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,8 +158,8 @@ function ProductModal({ onClose, profile, activeBranchId, product }: ProductModa
           sku,
           stock: parseFloat(stock),
           unit,
-          price: parseFloat(price) || 0,
-          cost: parseFloat(cost) || 0,
+          price: parseNumber(price),
+          cost: parseNumber(cost),
         });
       } else {
         await addDoc(collection(db, 'products'), {
@@ -167,8 +167,8 @@ function ProductModal({ onClose, profile, activeBranchId, product }: ProductModa
           sku,
           stock: parseFloat(stock),
           unit,
-          price: parseFloat(price) || 0,
-          cost: parseFloat(cost) || 0,
+          price: parseNumber(price),
+          cost: parseNumber(cost),
           userId: auth.currentUser?.uid,
           branchId: activeBranchId,
           createdAt: serverTimestamp(),
@@ -207,7 +207,7 @@ function ProductModal({ onClose, profile, activeBranchId, product }: ProductModa
           <Plus className="w-7 h-7 rotate-45" />
         </button>
         <span className="font-display font-semibold text-white text-base">
-          {isEditing ? 'Detail produk' : 'Produk baru'}
+          {isEditing ? 'Detail material' : 'Material baru'}
         </span>
         {isEditing ? (
           <button onClick={handleDelete} className="p-3 text-danger hover:bg-danger/10 rounded-xl transition-colors">
@@ -220,7 +220,7 @@ function ProductModal({ onClose, profile, activeBranchId, product }: ProductModa
 
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-8 py-10 space-y-10 no-scrollbar">
         <div className="space-y-4">
-          <label className="text-label ml-2">Identitas produk</label>
+          <label className="text-label ml-2">Spesifikasi Material</label>
           <div className="bg-dark-card border border-dark-border rounded-xl p-5 focus-within:border-neon-lime/30 transition-all">
             <input
               required
@@ -228,28 +228,28 @@ function ProductModal({ onClose, profile, activeBranchId, product }: ProductModa
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Kopi Gayo V60"
+              placeholder="Contoh: Telur, Susu, Cokelat"
               className="w-full bg-transparent text-lg font-bold text-white outline-none placeholder:text-white/10"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-dark-card border border-dark-border rounded-xl p-4">
-              <p className="text-caption mb-1">Kode SKU</p>
+              <p className="text-caption mb-1">Kode Material</p>
               <input
                 type="text"
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
-                placeholder="SKU-001"
+                placeholder="RAW-MAT"
                 className="w-full bg-transparent text-sm font-semibold text-neon-lime outline-none"
               />
             </div>
             <div className="bg-dark-card border border-dark-border rounded-xl p-4">
-              <p className="text-caption mb-1">Satuan unit</p>
+              <p className="text-caption mb-1">Satuan Ukur</p>
               <input
                 type="text"
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                placeholder="pcs, kg"
+                placeholder="kg, box, liter"
                 className="w-full bg-transparent text-sm font-semibold text-white outline-none"
               />
             </div>
@@ -275,29 +275,31 @@ function ProductModal({ onClose, profile, activeBranchId, product }: ProductModa
         </div>
 
         <div className="space-y-4 pb-12">
-          <label className="text-label ml-2">Penetapan harga</label>
+          <label className="text-label ml-2">Estimasi Nilai</label>
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-dark-card border border-dark-border rounded-xl p-4 space-y-2">
-              <p className="text-caption">Harga beli</p>
+              <p className="text-caption">Biaya Kulakan</p>
               <div className="flex items-center gap-1">
                 <span className="text-xs text-white/20 font-bold">Rp</span>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={cost}
-                  onChange={(e) => setCost(e.target.value)}
+                  onChange={(e) => setCost(formatNumber(e.target.value))}
                   placeholder="0"
                   className="w-full bg-transparent text-base font-bold text-white outline-none"
                 />
               </div>
             </div>
             <div className="bg-dark-card border border-neon-lime/20 rounded-xl p-4 space-y-2">
-              <p className="text-caption text-neon-lime/60">Harga jual</p>
+              <p className="text-caption text-neon-lime/60">Harga Output</p>
               <div className="flex items-center gap-1">
                 <span className="text-xs text-neon-lime/40 font-bold">Rp</span>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e) => setPrice(formatNumber(e.target.value))}
                   placeholder="0"
                   className="w-full bg-transparent text-base font-bold text-neon-lime outline-none"
                 />
@@ -318,7 +320,7 @@ function ProductModal({ onClose, profile, activeBranchId, product }: ProductModa
           ) : (
             <div className="flex items-center gap-2">
                 <Check className="w-5 h-5" />
-                <span>Simpan data produk</span>
+                <span>Simpan data material</span>
             </div>
           )}
         </button>

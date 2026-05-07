@@ -39,7 +39,9 @@ export default function App() {
   
   // --- UI Lifecycle ---
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'sales' | 'inventory' | 'customers' | 'profile'>('dashboard');
+  const [isOnline, setIsOnline] = useState(window.navigator.onLine);
+  const [showSplash, setShowSplash] = useState(true);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'sales' | 'inventory' | 'reports' | 'profile'>('dashboard');
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const [isBranchManagerOpen, setIsBranchManagerOpen] = useState(false);
 
@@ -47,6 +49,17 @@ export default function App() {
    * Monitor Connectivity and Auth Session
    */
   useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Initial splash delay
+    const splashTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2000);
+
     const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);
       if (!u) {
@@ -56,7 +69,13 @@ export default function App() {
         setTransactions([]);
       }
     });
-    return () => unsubscribeAuth();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearTimeout(splashTimer);
+      unsubscribeAuth();
+    };
   }, []);
 
   /**
@@ -188,6 +207,55 @@ export default function App() {
     await updateDoc(doc(db, 'userProfiles', user.uid), { activeBranchId: id });
   };
 
+  if (showSplash) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-dark-bg text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-neon-lime/10 rounded-full blur-[100px] -mr-48 -mt-48" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-neon-lime/5 rounded-full blur-[100px] -ml-48 -mb-48" />
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative z-10 flex flex-col items-center"
+        >
+          <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 relative">
+            <Coins className="w-12 h-12 text-neon-lime" />
+            <div className="absolute inset-0 bg-neon-lime/20 blur-2xl rounded-full animate-pulse" />
+          </div>
+          <h1 className="text-4xl font-bold tracking-tighter mb-2">Jago <span className="text-neon-lime">UMKM</span></h1>
+          <div className="w-48 h-1 bg-white/5 rounded-full mt-8 overflow-hidden">
+            <motion.div 
+               initial={{ width: 0 }}
+               animate={{ width: '100%' }}
+               transition={{ duration: 1.5, ease: "easeInOut" }}
+               className="h-full bg-neon-lime" 
+            />
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!isOnline) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-dark-bg px-8 text-center">
+        <div className="w-20 h-20 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mb-8">
+          <Building2 className="w-10 h-10 opacity-50" />
+        </div>
+        <h1 className="text-3xl font-bold text-white mb-4">Koneksi terputus</h1>
+        <p className="text-body text-white/40 mb-10 leading-relaxed max-w-xs">
+          Sepertinya kamu sedang tidak terhubung ke internet. Pastikan koneksi kamu aktif untuk menggunakan Jago UMKM.
+        </p>
+        <button
+          onClick={() => setIsOnline(window.navigator.onLine)}
+          className="btn-primary w-full max-w-xs h-16 text-sm"
+        >
+          <span>Coba lagi</span>
+        </button>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-dark-bg text-white">
@@ -199,6 +267,15 @@ export default function App() {
       </div>
     );
   }
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      alert(`Gagal masuk: ${error.message || "Pastikan browser kamu mengizinkan popup."}`);
+    }
+  };
 
   if (!user) {
     return (
@@ -221,7 +298,7 @@ export default function App() {
             Kelola bisnis kamu dengan wawasan cerdas dan manajemen multi-cabang yang modern.
           </p>
           <button
-            onClick={signInWithGoogle}
+            onClick={handleSignIn}
             className="btn-primary w-full h-16 text-sm"
           >
             <LogIn className="w-5 h-5 stroke-[3]" />
@@ -262,18 +339,10 @@ export default function App() {
         return <Sales products={products} customers={customers} invoices={invoices} profile={profile} activeBranchId={profile.activeBranchId!} />;
       case 'inventory':
         return <Inventory products={products} profile={profile} activeBranchId={profile.activeBranchId!} />;
-      case 'customers':
-        return <Customers customers={customers} profile={profile} activeBranchId={profile.activeBranchId!} />;
+      case 'reports':
+        return <Reports transactions={transactions} profile={profile} />;
       case 'profile':
-        return (
-          <div className="space-y-12">
-            <Profile profile={profile} user={user} onManageBranches={() => setIsBranchManagerOpen(true)} />
-            <div className="section-container !space-y-6">
-              <h2 className="px-1">Performa finansial</h2>
-              <Reports transactions={transactions} profile={profile} />
-            </div>
-          </div>
-        );
+        return <Profile profile={profile} user={user} onManageBranches={() => setIsBranchManagerOpen(true)} />;
       default:
         return <Dashboard transactions={transactions} profile={profile} products={products} branches={branches} />;
     }
@@ -281,34 +350,32 @@ export default function App() {
 
   return (
     <>
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-      <div className="px-6 pt-6 flex justify-between items-center bg-dark-bg sticky top-0 z-30 pb-4">
-        <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-neon-lime flex items-center justify-center">
-                <Coins className="w-5 h-5 text-black" />
-            </div>
-            <span className="font-semibold text-white text-base">Jago UMKM</span>
-        </div>
+    <Layout 
+      activeTab={activeTab} 
+      setActiveTab={setActiveTab}
+      headerRight={
         <BranchSelector 
             branches={branches} 
             activeBranchId={profile.activeBranchId} 
             onSelect={handleBranchSelect} 
             onManage={() => setIsBranchManagerOpen(true)}
         />
+      }
+    >
+      <div className="pt-4">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab + (profile.activeBranchId || '')}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="pb-24"
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
       </div>
-      
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab + (profile.activeBranchId || '')}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="pb-24"
-        >
-          {renderContent()}
-        </motion.div>
-      </AnimatePresence>
     </Layout>
     
     <button 

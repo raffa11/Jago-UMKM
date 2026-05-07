@@ -86,7 +86,9 @@ export function TransactionList({ transactions, profile, products = [] }: Transa
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-2">
-                        <p className="text-base font-black text-white leading-none tracking-tight">{t.category}</p>
+                        <p className="text-base font-black text-white leading-none tracking-tight">
+                          {t.category.toLowerCase() === 'stok barang' ? 'Bahan Baku' : t.category}
+                        </p>
                         {t.quantity && (
                           <span className="label-micro !text-[8px] px-2 py-0.5 rounded-lg bg-neon-muted/5 border border-white/5 data-tabular">
                             {t.quantity} qty

@@ -129,7 +129,9 @@ export function Dashboard({ transactions, profile, products = [], branches = [] 
                   {t.type === TransactionType.INCOME ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-base leading-none mb-1">{t.category}</p>
+                  <p className="font-semibold text-white text-base leading-none mb-1">
+                    {t.category.toLowerCase() === 'stok barang' ? 'Bahan Baku' : t.category}
+                  </p>
                   <p className="text-caption leading-none">{t.description || 'Catatan kosong'}</p>
                 </div>
               </div>
