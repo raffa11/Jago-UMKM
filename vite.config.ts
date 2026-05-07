@@ -2,33 +2,36 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
-import { VitePWA } from 'vite-plugin-pwa';
+import type { Plugin } from 'vite';
+
+/**
+ * Custom Vite plugin: removes `crossorigin` attributes from <script> and <link> tags
+ * in the generated index.html. Android's Capacitor WebView (`https://localhost` or
+ * `capacitor://localhost`) blocks local script/CSS loading when CORS is enforced.
+ */
+function removeCrossorigin(): Plugin {
+  return {
+    name: 'remove-crossorigin',
+    enforce: 'post',
+    transformIndexHtml(html: string) {
+      return html.replace(/\s*crossorigin\b/gi, '');
+    },
+  };
+}
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
+    // CRITICAL: Relative paths for Android WebView asset loading.
+    // Without this, index.html uses `/assets/` which fails in file:// or capacitor:// protocols.
+    base: './',
+
     plugins: [
       react(), 
       tailwindcss(),
-      VitePWA({
-        registerType: 'autoUpdate',
-        manifest: {
-          short_name: 'Jago UMKM',
-          name: 'Jago UMKM - Solusi Keuangan Pintar',
-          icons: [
-            {
-              src: 'https://cdn-icons-png.flaticon.com/512/3135/3135706.png',
-              type: 'image/png',
-              sizes: '512x512',
-              purpose: 'any maskable'
-            }
-          ],
-          start_url: '.',
-          display: 'standalone',
-          theme_color: '#0A0A0B',
-          background_color: '#0A0A0B'
-        }
-      })
+      removeCrossorigin(),
+      // PWA removed — Capacitor handles native app lifecycle, PWA service workers
+      // conflict with native WebView navigation and cause caching issues.
     ],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
@@ -39,22 +42,19 @@ export default defineConfig(({mode}) => {
       },
     },
     build: {
+      // No aggressive code splitting — keep chunks simple to reduce
+      // module loading failure points in Android WebView.
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom'],
-            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
-            'vendor-charts': ['recharts'],
-            'vendor-motion': ['motion/react'],
-            'vendor-icons': ['lucide-react'],
-          },
+          // Single vendor chunk only, no fine-grained splitting
+          manualChunks: undefined,
         },
       },
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 1500,
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
   };

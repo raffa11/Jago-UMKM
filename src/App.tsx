@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, onSnapshot, collection, query, where, orderBy, updateDoc } from 'firebase/firestore';
-import { auth, db, signInWithGoogle, handleFirestoreError } from './lib/firebase';
+import { auth, db, signInWithGoogle, handleFirestoreError, handleRedirectResult } from './lib/firebase';
 import { Transaction, UserProfile, Product, Customer, Invoice, Branch, OperationType } from './types';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
@@ -59,6 +59,10 @@ export default function App() {
     const splashTimer = setTimeout(() => {
       setShowSplash(false);
     }, 2000);
+
+    // Process any pending redirect result (for Capacitor native APK only).
+    // In browser contexts we use popup, so this is a no-op.
+    handleRedirectResult().catch(() => {});
 
     const unsubscribeAuth = onAuthStateChanged(auth, (u) => {
       setUser(u);

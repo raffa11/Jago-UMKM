@@ -2,13 +2,52 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-    <script type="module" crossorigin src="/assets/index-CdVRF5s2.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DiqWxbL7.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0A0A0B" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Jago UMKM - Solusi keuangan pintar untuk UMKM Indonesia. Kelola bisnis multi-cabang dengan AI." />
+    <title>Jago UMKM - Smart SME Fintech</title>
+
+    <!-- BULLETPROOF ERROR CATCHER: Catches ALL errors before React even mounts.
+         Displays a visible red error box so the app NEVER shows a silent blank white screen. -->
+    <script>
+      window.onerror = function(msg, source, lineno, colno, error) {
+        var box = document.getElementById('__fatal_error__');
+        if (!box) {
+          box = document.createElement('div');
+          box.id = '__fatal_error__';
+          box.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:#1a0000;color:#ff4444;padding:24px;font-family:monospace;font-size:13px;overflow:auto;white-space:pre-wrap;word-break:break-all;';
+          document.body.appendChild(box);
+        }
+        box.innerHTML += '<b style="color:#ff6b6b;font-size:16px;">⚠ FATAL ERROR</b>\n\n'
+          + '<b>Message:</b> ' + msg + '\n'
+          + '<b>Source:</b> ' + source + '\n'
+          + '<b>Line:</b> ' + lineno + ':' + colno + '\n'
+          + '<b>Stack:</b> ' + (error && error.stack ? error.stack : 'N/A') + '\n\n'
+          + '---\n\n';
+        return false;
+      };
+
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = event.reason;
+        var box = document.getElementById('__fatal_error__');
+        if (!box) {
+          box = document.createElement('div');
+          box.id = '__fatal_error__';
+          box.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:999999;background:#1a0000;color:#ff4444;padding:24px;font-family:monospace;font-size:13px;overflow:auto;white-space:pre-wrap;word-break:break-all;';
+          document.body.appendChild(box);
+        }
+        box.innerHTML += '<b style="color:#ff6b6b;font-size:16px;">⚠ UNHANDLED PROMISE REJECTION</b>\n\n'
+          + '<b>Reason:</b> ' + (reason instanceof Error ? reason.message : String(reason)) + '\n'
+          + '<b>Stack:</b> ' + (reason instanceof Error ? reason.stack : 'N/A') + '\n\n'
+          + '---\n\n';
+      });
+    </script>
+    <script type="module" src="./assets/index-BX0lhdX7.js"></script>
+    <link rel="stylesheet" href="./assets/index-nseFD1eH.css">
   </head>
   <body>
     <div id="root"></div>
   </body>
 </html>
-
