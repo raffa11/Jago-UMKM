@@ -13,6 +13,18 @@ export interface Transaction {
   description: string;
   date: Timestamp;
   userId: string;
+  branchId: string;
+  createdAt: Timestamp;
+  productId?: string;
+  quantity?: number;
+}
+
+export interface Branch {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  userId: string;
   createdAt: Timestamp;
 }
 
@@ -22,6 +34,56 @@ export interface UserProfile {
   currency: string;
   email?: string;
   onboardingCompleted: boolean;
+  activeBranchId?: string;
+  createdAt: Timestamp;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  sku?: string;
+  stock: number;
+  unit: string;
+  price: number;
+  cost: number;
+  userId: string;
+  branchId: string;
+  createdAt: Timestamp;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  totalSpent: number;
+  totalDebt: number;
+  userId: string;
+  branchId: string;
+  createdAt: Timestamp;
+}
+
+export interface InvoiceItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  price: number;
+  cost: number;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  customerId?: string;
+  customerName?: string;
+  items: InvoiceItem[];
+  totalAmount: number;
+  totalCost: number;
+  profit: number;
+  status: 'Lunas' | 'Belum Lunas';
+  userId: string;
+  branchId: string;
+  date: Timestamp;
   createdAt: Timestamp;
 }
 

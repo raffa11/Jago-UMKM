@@ -1,87 +1,108 @@
 import { User as FirebaseUser } from 'firebase/auth';
 import { UserProfile } from '../types';
 import { auth } from '../lib/firebase';
-import { LogOut, Store, Mail, Globe, Settings, ShieldCheck, ChevronRight } from 'lucide-react';
+import { LogOut, Store, Mail, Globe, Settings, ShieldCheck, ChevronRight, Building2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface ProfileProps {
   profile: UserProfile;
   user: FirebaseUser;
+  onManageBranches: () => void;
 }
 
-export function Profile({ profile, user }: ProfileProps) {
+export function Profile({ profile, user, onManageBranches }: ProfileProps) {
   const handleSignOut = () => auth.signOut();
 
   return (
-    <div className="px-6">
-      <header className="mb-10 text-center">
-        <div className="w-24 h-24 rounded-[2.5rem] bg-indigo-50 border-4 border-white shadow-xl mx-auto mb-6 flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-indigo-600/5" />
-          <Store className="w-10 h-10 text-indigo-600 relative z-10" />
+    <div className="section-container">
+      <header className="text-center group pt-10">
+        <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 mx-auto mb-6 flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-all">
+          <Store className="w-10 h-10 text-neon-lime relative z-10" />
         </div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-tight mb-1">{profile.businessName}</h1>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{profile.businessType || 'General SME'}</p>
+        <h1 className="text-3xl font-bold text-white leading-tight mb-2">{profile.businessName}</h1>
+        <div className="inline-flex bg-neon-lime/10 border border-neon-lime/20 rounded-full py-1.5 px-4 items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-neon-lime animate-pulse" />
+            <span className="text-caption !text-neon-lime font-medium">
+                {profile.businessType || 'UMKM Digital'}
+            </span>
+        </div>
       </header>
 
-      <div className="space-y-6">
-        <section>
-          <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 ml-2">Account Info</h4>
-          <div className="bg-slate-50 rounded-3xl p-2">
-            <div className="flex items-center gap-4 p-4">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-400 shadow-sm">
+      <div className="space-y-8 pt-4">
+        <section className="space-y-4">
+          <h2 className="px-1 text-lg">Identitas bisnis</h2>
+          <div className="card-fintech !p-0 overflow-hidden">
+            <div className="flex items-center gap-4 p-5 border-b border-white/5">
+              <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-white/40">
                 <Mail className="w-5 h-5" />
               </div>
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Email</p>
-                <p className="text-sm font-bold text-slate-700">{user.email}</p>
+              <div className="flex flex-col">
+                <span className="text-label text-white/40">Penanggung jawab</span>
+                <span className="text-sm font-semibold text-white truncate max-w-[200px]">{user.email}</span>
               </div>
             </div>
-            <div className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm">
+            <div className="flex items-center justify-between p-5">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <div className="w-12 h-12 rounded-xl bg-neon-lime/5 border border-neon-lime/20 flex items-center justify-center text-neon-lime">
                   <Globe className="w-5 h-5" />
                 </div>
-                <div>
-                  <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest leading-none mb-1">Currency</p>
-                  <p className="text-sm font-bold text-slate-700">{profile.currency}</p>
+                <div className="flex flex-col">
+                  <span className="text-label text-neon-lime/60">Wilayah operasi</span>
+                  <span className="text-sm font-semibold text-white">{profile.currency} (Indonesia)</span>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-200" />
+              <ChevronRight className="w-4 h-4 text-white/10" />
             </div>
           </div>
         </section>
 
-        <section>
-          <h4 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 ml-2">Preferences</h4>
+        <section className="space-y-4">
+          <h2 className="px-1 text-lg">Pengaturan sistem</h2>
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-between p-5 bg-slate-50 rounded-3xl group transition-all active:scale-[0.98]">
+            <button 
+                onClick={onManageBranches}
+                className="w-full flex items-center justify-between p-5 card-fintech hover:border-neon-lime/30 transition-all active:scale-[0.98]"
+            >
               <div className="flex items-center gap-4">
-                <Settings className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" />
-                <span className="text-sm font-bold text-slate-700">App Settings</span>
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 group-hover:bg-neon-lime group-hover:text-black transition-all">
+                   <Building2 className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                    <span className="text-sm font-bold text-white block">Manajemen cabang</span>
+                    <span className="text-caption text-white/30">Multi-branch system</span>
+                </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-200" />
+              <ChevronRight className="w-4 h-4 text-white/10" />
             </button>
-            <button className="w-full flex items-center justify-between p-5 bg-slate-50 rounded-3xl group transition-all active:scale-[0.98]">
+
+            <button className="w-full flex items-center justify-between p-5 card-fintech hover:border-neon-lime/30 transition-all active:scale-[0.98]">
               <div className="flex items-center gap-4">
-                <ShieldCheck className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" />
-                <span className="text-sm font-bold text-slate-700">Security & Privacy</span>
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 group-hover:bg-neon-lime group-hover:text-black transition-all">
+                   <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                    <span className="text-sm font-bold text-white block">Keamanan data</span>
+                    <span className="text-caption text-white/30">Proteksi digital</span>
+                </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-200" />
+              <ChevronRight className="w-4 h-4 text-white/10" />
             </button>
           </div>
         </section>
 
         <button 
           onClick={handleSignOut}
-          className="w-full mt-12 bg-rose-50 text-rose-600 font-black py-5 px-6 rounded-[2rem] flex items-center justify-center gap-2 hover:bg-rose-100 transition-colors active:scale-95"
+          className="w-full h-16 bg-red-500/5 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all group"
         >
-          <LogOut className="w-5 h-5" />
-          <span className="uppercase tracking-widest text-xs">Sign Out</span>
+          <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-bold text-sm">Keluar sistem</span>
         </button>
       </div>
 
-      <div className="mt-12 text-center">
-        <p className="text-[9px] font-black text-slate-200 uppercase tracking-[0.3em]">SmartBiz v1.0.0</p>
+      <div className="pt-12 pb-8 text-center">
+        <p className="text-caption text-white/10">
+            Jago UMKM engine core v5.0
+        </p>
       </div>
     </div>
   );

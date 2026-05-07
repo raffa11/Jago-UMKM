@@ -8,8 +8,8 @@ service cloud.firestore {
 
     // --- Helpers ---
     function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
     function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
-    function isVerified() { return request.auth.token.email_verified == true; }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
@@ -19,37 +19,104 @@ service cloud.firestore {
       return data.businessName is string && data.businessName.size() <= 200
           && data.currency is string && data.currency.size() <= 10
           && (data.businessType == null || (data.businessType is string && data.businessType.size() <= 100))
-          && (data.onboardingCompleted is bool);
+          && data.onboardingCompleted is bool
+          && (data.activeBranchId == null || isValidId(data.activeBranchId));
     }
 
     match /userProfiles/{userId} {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && isValidUserProfile(incoming());
       allow update: if isOwner(userId) && isValidUserProfile(incoming())
-                    && incoming().diff(existing()).affectedKeys().hasOnly(['businessName', 'currency', 'businessType', 'onboardingCompleted']);
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['businessName', 'currency', 'businessType', 'onboardingCompleted', 'activeBranchId']);
+    }
+
+    // --- Branch Security ---
+    function isValidBranch(data) {
+      return data.name is string && data.name.size() <= 100
+          && data.userId == request.auth.uid;
+    }
+
+    match /branches/{branchId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && isValidBranch(incoming());
+      allow update: if isVerified() && resource.data.userId == request.auth.uid && isValidBranch(incoming());
+      allow delete: if isVerified() && resource.data.userId == request.auth.uid;
     }
 
     // --- Transaction Security ---
     function isValidTransaction(data) {
-      return data.type in ['income', 'expense']
+      return data.keys().hasAll(['type', 'amount', 'category', 'date', 'userId', 'branchId'])
+          && data.type in ['income', 'expense']
           && data.amount is number && data.amount >= 0
           && data.category is string && data.category.size() <= 100
           && data.userId == request.auth.uid
+          && data.branchId is string
           && data.date is timestamp;
     }
 
     match /transactions/{transactionId} {
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && isValidTransaction(incoming());
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && isValidTransaction(incoming());
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && isValidTransaction(incoming());
+      allow update: if isVerified() && resource.data.userId == request.auth.uid && isValidTransaction(incoming());
+      allow delete: if isVerified() && resource.data.userId == request.auth.uid;
+    }
+
+    // --- Product Security ---
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'stock', 'userId', 'branchId'])
+          && data.name is string && data.name.size() <= 200
+          && data.stock is number
+          && data.userId == request.auth.uid
+          && data.branchId is string;
+    }
+
+    match /products/{productId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && isValidProduct(incoming());
+      allow update: if isVerified() && resource.data.userId == request.auth.uid && isValidProduct(incoming());
+      allow delete: if isVerified() && resource.data.userId == request.auth.uid;
+    }
+
+    // --- Customer Security ---
+    function isValidCustomer(data) {
+      return data.keys().hasAll(['name', 'userId', 'branchId'])
+          && data.name is string && data.name.size() <= 200
+          && data.userId == request.auth.uid
+          && data.branchId is string;
+    }
+
+    match /customers/{customerId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && isValidCustomer(incoming());
+      allow update: if isVerified() && resource.data.userId == request.auth.uid && isValidCustomer(incoming());
+      allow delete: if isVerified() && resource.data.userId == request.auth.uid;
+    }
+
+    // --- Invoice Security ---
+    function isValidInvoice(data) {
+      return data.keys().hasAll(['invoiceNumber', 'items', 'totalAmount', 'status', 'userId', 'branchId'])
+          && data.invoiceNumber is string
+          && data.items is list
+          && data.userId == request.auth.uid
+          && data.branchId is string;
+    }
+
+    match /invoices/{invoiceId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isVerified() && isValidInvoice(incoming());
+      allow update: if isVerified() && resource.data.userId == request.auth.uid && isValidInvoice(incoming());
+      allow delete: if isVerified() && resource.data.userId == request.auth.uid;
     }
 
     // --- Category Security ---
     match /categories/{categoryId} {
       allow read: if isSignedIn();
-      allow write: if false; // System defined for now
+      allow write: if false; 
     }
   }
 }

@@ -1,0 +1,16 @@
+{
+  "short_name": "Jago UMKM",
+  "name": "Jago UMKM - Solusi Keuangan Pintar",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0A0A0B",
+  "background_color": "#0A0A0B"
+}

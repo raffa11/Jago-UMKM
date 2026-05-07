@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Jago UMKM</string>
+    <string name="title_activity_main">Jago UMKM</string>
+    <string name="package_name">com.jagoumkm.app</string>
+    <string name="custom_url_scheme">com.jagoumkm.app</string>
+</resources>

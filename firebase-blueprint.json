@@ -10,9 +10,23 @@
         "currency": { "type": "string", "description": "Preferred currency code (e.g., IDR, USD)." },
         "email": { "type": "string", "description": "Contact email." },
         "onboardingCompleted": { "type": "boolean", "description": "Whether the user finished initial setup." },
+        "activeBranchId": { "type": "string", "description": "Currently selected branch ID." },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["businessName", "currency"]
+    },
+    "Branch": {
+      "title": "Branch",
+      "description": "Business location or branch.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "userId"]
     },
     "Transaction": {
       "title": "Transaction",
@@ -25,9 +39,10 @@
         "description": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
         "userId": { "type": "string" },
+        "branchId": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["type", "amount", "category", "date", "userId"]
+      "required": ["type", "amount", "category", "date", "userId", "branchId"]
     },
     "Category": {
       "title": "Category",
@@ -39,6 +54,58 @@
         "iconName": { "type": "string" }
       },
       "required": ["name", "type"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Inventory item tracking.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "sku": { "type": "string" },
+        "stock": { "type": "number" },
+        "unit": { "type": "string" },
+        "price": { "type": "number" },
+        "cost": { "type": "number" },
+        "userId": { "type": "string" },
+        "branchId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "stock", "userId", "branchId"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer contact and debt tracking.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "totalSpent": { "type": "number" },
+        "totalDebt": { "type": "number" },
+        "userId": { "type": "string" },
+        "branchId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "userId", "branchId"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Sales invoice with multiple items.",
+      "type": "object",
+      "properties": {
+        "invoiceNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "items": { "type": "array" },
+        "totalAmount": { "type": "number" },
+        "totalCost": { "type": "number" },
+        "profit": { "type": "number" },
+        "status": { "type": "string", "enum": ["Lunas", "Belum Lunas"] },
+        "userId": { "type": "string" },
+        "branchId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" }
+      },
+      "required": ["invoiceNumber", "items", "totalAmount", "status", "userId", "branchId"]
     }
   },
   "firestore": {
@@ -46,9 +113,25 @@
       "schema": "UserProfile",
       "description": "Individual business profile for each user."
     },
+    "/branches/{branchId}": {
+      "schema": "Branch",
+      "description": "Branches for each user."
+    },
     "/transactions/{transactionId}": {
       "schema": "Transaction",
-      "description": "Global collection of transactions (secured by userId)."
+      "description": "Global collection of transactions (secured by userId and branchId)."
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Inventory products for each user and branch."
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customers for each user and branch."
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Sales invoices for each user and branch."
     },
     "/categories/{categoryId}": {
       "schema": "Category",

@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { Transaction, UserProfile, TransactionType } from '../types';
-import { formatCurrency } from '../lib/utils';
-import { Plus, ArrowUpRight, ArrowDownLeft, TrendingUp, Sparkles, Loader2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { format } from 'date-fns';
+import { Transaction, UserProfile, TransactionType, Product, Branch } from '../types';
+import { formatCurrency, cn } from '../lib/utils';
+import { Plus, ArrowUpRight, ArrowDownLeft, TrendingUp, Sparkles, AlertTriangle, Building2, Wallet } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { AddTransaction } from './AddTransaction';
 import { AIInsights } from './AIInsights';
 
 interface DashboardProps {
   transactions: Transaction[];
   profile: UserProfile;
+  products?: Product[];
+  branches?: Branch[];
 }
 
-export function Dashboard({ transactions, profile }: DashboardProps) {
+export function Dashboard({ transactions, profile, products = [], branches = [] }: DashboardProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
 
   const totalIncome = transactions
@@ -23,96 +26,146 @@ export function Dashboard({ transactions, profile }: DashboardProps) {
     .reduce((acc, t) => acc + t.amount, 0);
 
   const balance = totalIncome - totalExpense;
+  const lowStockProducts = products.filter(p => p.stock <= 5);
+  const activeBranch = branches.find(b => b.id === profile.activeBranchId);
 
   return (
-    <div className="px-6 py-4">
-      {/* Header */}
-      <header className="flex justify-between items-center mb-10">
-        <div>
-          <h2 className="text-sm font-medium text-slate-500 uppercase tracking-widest leading-none mb-1">Overview</h2>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{profile.businessName}</h1>
-        </div>
-        <button 
-          onClick={() => setIsAddOpen(true)}
-          className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200 active:scale-95 transition-all"
-        >
-          <Plus className="w-6 h-6 stroke-[3]" />
-        </button>
-      </header>
-
-      {/* Main Balance Card */}
+    <div className="section-container">
+      {/* Saldo Utama */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-indigo-600 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-indigo-200 mb-10 relative overflow-hidden"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="card-fintech relative overflow-hidden group"
       >
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-400/20 rounded-full -ml-8 -mb-8 blur-xl" />
-        
-        <p className="text-white/70 text-xs font-bold uppercase tracking-[0.2em] mb-2 z-10 relative">Net Balance</p>
-        <h3 className="text-4xl font-extrabold tracking-tighter mb-8 z-10 relative">
-          {formatCurrency(balance, profile.currency)}
-        </h3>
-        
-        <div className="flex gap-4 z-10 relative">
-          <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-white/70 text-[10px] font-black uppercase tracking-wider mb-1">
-              <ArrowUpRight className="w-3 h-3 text-emerald-400 stroke-[4]" />
-              Income
+        <div className="absolute inset-0 bg-neo-gradient opacity-[0.03] group-hover:opacity-[0.05] transition-opacity" />
+        <div className="relative z-10 space-y-6">
+            <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                    <p className="text-label">Total saldo</p>
+                    <h1 className="text-[32px] text-white">
+                        {formatCurrency(balance, profile.currency)}
+                    </h1>
+                </div>
+                <div className="w-12 h-12 bg-neon-lime/10 rounded-xl flex items-center justify-center text-neon-lime">
+                    <Wallet className="w-6 h-6" />
+                </div>
             </div>
-            <p className="font-bold text-sm">{formatCurrency(totalIncome, profile.currency)}</p>
-          </div>
-          <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-white/70 text-[10px] font-black uppercase tracking-wider mb-1">
-              <ArrowDownLeft className="w-3 h-3 text-rose-400 stroke-[4]" />
-              Expenses
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-dark-bg/60 rounded-xl border border-white/5 space-y-2">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(57,255,20,0.5)]" />
+                        <span className="text-caption">Harian</span>
+                    </div>
+                    <div>
+                        <p className="text-label text-white/40 mb-0.5">Pemasukan</p>
+                        <p className="text-base font-semibold text-white">{formatCurrency(totalIncome, profile.currency)}</p>
+                    </div>
+                </div>
+                <div className="p-4 bg-dark-bg/60 rounded-xl border border-white/5 space-y-2">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-danger shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+                        <span className="text-caption">Harian</span>
+                    </div>
+                    <div>
+                        <p className="text-label text-white/40 mb-0.5">Pengeluaran</p>
+                        <p className="text-base font-semibold text-white">{formatCurrency(totalExpense, profile.currency)}</p>
+                    </div>
+                </div>
             </div>
-            <p className="font-bold text-sm">{formatCurrency(totalExpense, profile.currency)}</p>
-          </div>
+            
+            {activeBranch && (
+                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-neon-lime/60" />
+                        <span className="text-label">{activeBranch.name}</span>
+                    </div>
+                    <span className="text-caption text-neon-lime font-medium">Sinkron real-time</span>
+                </div>
+            )}
         </div>
       </motion.div>
 
-      {/* AI Insights Section */}
+      {/* Peringatan Stok */}
+      {lowStockProducts.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-danger/10 border border-danger/20 p-4 rounded-fintech flex items-center gap-4"
+        >
+          <div className="w-10 h-10 rounded-xl bg-danger/20 flex items-center justify-center text-danger">
+            <AlertTriangle className="w-5 h-5 animate-pulse" />
+          </div>
+          <div className="flex-1">
+            <p className="text-label text-danger font-semibold mb-0.5">Peringatan operasional</p>
+            <p className="text-body font-medium">{lowStockProducts.length} produk hampir habis!</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* AI Intelligence */}
       <AIInsights transactions={transactions} profile={profile} />
 
-      {/* Recent Activity Mini List */}
-      <div className="mt-10">
-        <div className="flex justify-between items-center mb-4">
-          <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Recent Activity</h4>
-          <button className="text-[10px] font-black text-indigo-600 uppercase tracking-wider hover:opacity-70 transition-opacity">See all</button>
+      {/* Aktivitas Terbaru */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-end px-1">
+          <div>
+            <p className="text-label mb-0.5">Cek aktivitas</p>
+            <h2>Terbaru</h2>
+          </div>
+          <button className="text-label text-neon-lime font-semibold hover:opacity-70 transition-opacity">Lihat semua</button>
         </div>
+
         <div className="space-y-3">
-          {transactions.slice(0, 4).map((t) => (
-            <div key={t.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
+          {transactions.slice(0, 5).map((t) => (
+            <div key={t.id} className="card-fintech flex items-center justify-between group py-4">
               <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  t.type === TransactionType.INCOME ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
-                }`}>
+                <div className={cn(
+                  "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
+                  t.type === TransactionType.INCOME 
+                    ? "bg-success/10 text-success" 
+                    : "bg-white/5 text-white/40"
+                )}>
                   {t.type === TransactionType.INCOME ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-800 leading-none mb-1">{t.category}</p>
-                  <p className="text-[10px] font-medium text-slate-400 uppercase tracking-tighter italic">{t.description || 'No description'}</p>
+                  <p className="font-semibold text-white text-base leading-none mb-1">{t.category}</p>
+                  <p className="text-caption leading-none">{t.description || 'Catatan kosong'}</p>
                 </div>
               </div>
-              <p className={`font-black text-sm ${
-                t.type === TransactionType.INCOME ? 'text-emerald-600' : 'text-slate-800'
-              }`}>
-                {t.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(t.amount, profile.currency)}
-              </p>
+              <div className="text-right">
+                <p className={cn(
+                   "text-base font-bold",
+                   t.type === TransactionType.INCOME ? "text-success" : "text-white"
+                )}>
+                  {t.type === TransactionType.INCOME ? '+' : '-'}{formatCurrency(t.amount, profile.currency)}
+                </p>
+                <p className="text-caption mt-1">
+                  {format(t.date.toDate(), 'HH:mm')}
+                </p>
+              </div>
             </div>
           ))}
+
           {transactions.length === 0 && (
-            <div className="py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-3xl">
-              <TrendingUp className="w-10 h-10 text-slate-200 mb-3" />
-              <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">No activity yet</p>
+            <div className="py-16 flex flex-col items-center justify-center card-fintech border-dashed border-white/10">
+              <TrendingUp className="w-10 h-10 text-white/10 mb-4" />
+              <p className="text-caption px-8 text-center">Belum ada transaksi di cabang ini</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Add Transaction Modal */}
-      {isAddOpen && <AddTransaction onClose={() => setIsAddOpen(false)} profile={profile} />}
+      <AnimatePresence>
+        {isAddOpen && profile.activeBranchId && (
+          <AddTransaction 
+            onClose={() => setIsAddOpen(false)} 
+            profile={profile} 
+            products={products}
+            activeBranchId={profile.activeBranchId}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

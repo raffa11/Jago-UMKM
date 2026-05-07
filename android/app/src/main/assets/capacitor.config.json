@@ -1,0 +1,8 @@
+{
+	"appId": "com.jagoumkm.app",
+	"appName": "Jago UMKM",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
+}

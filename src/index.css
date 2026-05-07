@@ -1,24 +1,74 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Poppins", sans-serif;
+  
+  --color-neon-lime: #39FF14;
+  --color-neon-yellow: #DBFF00;
+  --color-dark-bg: #0A0A0B;
+  --color-dark-card: #161618;
+  --color-dark-border: #242427;
+  --color-neon-muted: #A3FF9D;
+  --color-success: #39FF14;
+  --color-danger: #FF3B30;
+  --color-warning: #FFCC00;
+  --color-info: #007AFF;
+
+  --radius-fintech: 16px;
 }
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
-    font-feature-settings: "cv11", "ss01";
+    @apply bg-dark-bg text-white font-sans antialiased overflow-x-hidden;
   }
+
+  /* Fintech Typography Scale */
+  h1 { @apply font-display font-bold text-[28px] tracking-tight leading-tight; }
+  h2 { @apply font-display font-semibold text-[22px] tracking-tight; }
+  h3 { @apply font-display font-medium text-[18px] tracking-tight; }
+  
+  .text-body { @apply font-sans font-normal text-[15px] leading-relaxed text-white/90; }
+  .text-caption { @apply font-sans font-normal text-xs text-white/50; }
+  .text-label { @apply font-sans font-medium text-[13px] text-white/60; }
+  
+  /* Alignment & Spacing */
+  .section-container { @apply px-4 py-6 space-y-6; }
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
+@layer components {
+  .card-fintech { 
+    @apply bg-dark-card border border-dark-border p-5 rounded-fintech shadow-sm; 
+  }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  .btn-primary {
+    @apply bg-neon-lime text-black font-semibold py-4 px-6 rounded-fintech transition-all active:scale-95 text-center flex items-center justify-center gap-2;
+  }
+  
+  .input-field {
+    @apply w-full bg-dark-bg border border-dark-border rounded-xl p-4 text-white outline-none focus:border-neon-lime/50 transition-all placeholder:text-white/20;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .glass-nav {
+    @apply bg-dark-card/80 backdrop-blur-2xl border-t border-dark-border/50;
+  }
+
+  .bg-neo-gradient {
+    background: linear-gradient(135deg, var(--color-neon-lime) 0%, var(--color-neon-yellow) 100%);
+  }
+
+  .text-neo-gradient {
+    background: linear-gradient(135deg, var(--color-neon-lime) 0%, var(--color-neon-yellow) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
